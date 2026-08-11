@@ -1,16 +1,6 @@
-from typing import List,Dict,Any
 
-todos_db : List[Dict[str,Any]] = [
-    {
-        "id": 1,
-        "title": "Learn FastAPI Structure",
-        "description": "Understand modular folder layout",
-        "is_completed": False,
-    },
-    {
-        "id": 2,
-        "title": "Connect with Flutter",
-        "description": "Integrate API using Dio",
-        "is_completed": False,
-    },
+# Fake database (In-Memory List)
+todos_db = [
+    {"id": 1, "title": "Buy Groceries", "description": "Milk, Eggs, Bread", "completed": False},
+    {"id": 2, "title": "Learn FastAPI", "description": "Understand Pydantic and Routes", "completed": True}
 ]
