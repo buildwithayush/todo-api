@@ -9,6 +9,10 @@ class TodoBase(BaseModel):
 class TodoCreate(TodoBase):
     pass
 
+class UpdateTodo(BaseModel):
+    title:Optional[str] = Field(None, min_length=3, max_length=100)
+    description : Optional[str] = Field(None, max_length=300)
+    completed : Optional[bool] = Field(None)
 
 class TodoResponse(BaseModel):
     id: int
