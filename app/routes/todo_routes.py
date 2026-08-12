@@ -1,8 +1,8 @@
-from fastapi import APIRouter,HTTPException,status,Depends
+from fastapi import APIRouter,HTTPException,status,Depends,Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List,Optional
 
-from app.models.todo import TodoCreate,TodoResponse
+from app.models.todo import TodoCreate,TodoResponse,UpdateTodo
 from app.database import get_db
 from app.models.todo_db import TodoDB
 
@@ -13,8 +13,16 @@ router = APIRouter(
 
 # GET ALL TODOS
 @router.get("/" ,response_model=List[TodoResponse])
-def get_todos(db:Session = Depends(get_db)):
-    todos = db.query(TodoDB).all()
+def get_todos(
+   completed:Optional[bool] =Query(None, description='Filter by completed status'),
+   skip:int =Query(0, ge=0 ,description='Number of records to skip '),
+   limit:int = Query(10,ge=1,le=100 ,description='Number Of records to fetch'),
+   db:Session = Depends(get_db)):
+    query = db.query(TodoDB)
+    if completed is not None:
+       query = query.filter(TodoDB.completed == completed)
+
+    todos = query.offset(skip).limit(limit).all()    
     return todos
 
 
@@ -73,4 +81,19 @@ def delete_todo(todo_id:int,db:Session = Depends(get_db)):
 
    db.delete(todo) 
    db.commit()
-  
+
+@router.patch('/{todo_id}' ,response_model=TodoResponse)
+def update_todo_partial(todo_id:int,todo_data:UpdateTodo,db:Session= Depends(get_db)):
+   todo = db.query(TodoDB).filter(TodoDB.id == todo_id).first()
+   if not todo:
+      raise HTTPException(
+         status_code= status.HTTP_404_NOT_FOUND,
+         detail=f'todo with {todo_id} not found'
+      )
+   update_dict = todo_data.model_dump(exclude_unset=True)
+   for key,value in update_dict.items():
+      setattr(todo,key,value)
+
+   db.commit()
+   db.refresh(todo)  
+   return todo
