@@ -24,7 +24,7 @@ def create_todo(todo: TodoCreate, db: Session = Depends(get_db)):
     db_todo = TodoDB(
         title=todo.title,
         description=todo.description,
-        completed=todo.is_Completed,
+        completed=todo.completed,
     )
 
     db.add(db_todo)
@@ -32,38 +32,45 @@ def create_todo(todo: TodoCreate, db: Session = Depends(get_db)):
     db.refresh(db_todo)
     return db_todo
 
-# @router.get('/{todo_id}' ,response_model=TodoResponse)
-# def get_todos_by_id(todo_id:int):
-#     for todo in todos_db:
-#        if todo['id'] == todo_id:
-#            return todo
-#     raise HTTPException(
-#     status_code=status.HTTP_404_NOT_FOUND,
-#     detail=f"Todo with ID {todo_id} not found"
-#     )
+@router.get('/{todo_id}' ,response_model=TodoResponse)
+def get_todos_by_id(todo_id:int,db: Session = Depends(get_db)):
+     todo = db.query(TodoDB).filter(TodoDB.id == todo_id).first()
+     if not todo:
+       raise HTTPException(
+    status_code=status.HTTP_404_NOT_FOUND,
+    detail=f"Todo with ID {todo_id} not found"
+    )
+     return todo
 
 
-# @router.put('/{todo_id}', response_model=TodoResponse)
-# def update_todo(todo_id: int, todo_data: TodoCreate):
-#     for todo in todos_db:
-#         if todo['id'] == todo_id:
-#             todo['title'] = todo_data.title
-#             todo['description'] = todo_data.description
-#             todo['completed'] = todo_data.is_Completed
-#             return todo
 
-#     raise HTTPException(
-#         status_code=status.HTTP_404_NOT_FOUND,
-#         detail='TODO NOT FOUND OR UPDATED'
-#     )
+@router.put('/{todo_id}', response_model=TodoResponse)
+def update_todo(todo_id: int, todo_data: TodoCreate, db:Session = Depends(get_db)):
+    todo = db.query(TodoDB).filter(TodoDB.id== todo_id).first()
+    if not todo:
+     raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail='TODO NOT FOUND OR UPDATED'
+    )
+    todo.title = todo_data.title
+    todo.description = todo_data.description
+    todo.completed = todo_data.completed
 
-# @router.delete('/{todo_id}',status_code=status.HTTP_204_NO_CONTENT)
-# def delete_todo(todo_id:int):
-#     for index,todo in enumerate(todos_db) :
-#         if todo['id'] == todo_id:
-#             todos_db.pop(index)
-#             return 
-#     raise HTTPException(
-#         status_code=status.HTTP_404_NOT_FOUND,
-#         detail=f"Todo with ID {todo_id} not found"
-#     )
+    
+  
+    db.commit()
+    db.refresh(todo)
+    return todo
+
+@router.delete('/{todo_id}',status_code=status.HTTP_204_NO_CONTENT)
+def delete_todo(todo_id:int,db:Session = Depends(get_db)):
+   todo = db.query(TodoDB).filter(TodoDB.id == todo_id).first()
+   if not todo:
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Todo with ID {todo_id} not found"
+    )
+
+   db.delete(todo) 
+   db.commit()
+  
