@@ -3,8 +3,12 @@ from sqlalchemy.orm import Session
 from typing import List,Optional
 
 from app.models.todo import TodoCreate,TodoResponse,UpdateTodo
+from app.models.user_pydantic import UserBase,UserCreate,UserResponse
 from app.database import get_db
 from app.models.todo_db import TodoDB
+from app.models.user_db import UserDB
+
+from app.core.security import hash_password
 
 router = APIRouter(
     prefix="/todos",
@@ -97,3 +101,21 @@ def update_todo_partial(todo_id:int,todo_data:UpdateTodo,db:Session= Depends(get
    db.commit()
    db.refresh(todo)  
    return todo
+
+@router.post('/signup',response_model=UserResponse ,status_code=status.HTTP_201_CREATED)
+def user_signup(user_data:UserCreate,db:Session=Depends(get_db)):
+   user = db.query(UserDB).filter(UserDB.email == user_data.email).first()
+
+   if user:
+      raise HTTPException(
+         status_code=status.HTTP_400_BAD_REQUEST,
+         detail=' Email Already Registered'
+      )
+   hash_pwd = hash_password(user_data.password)
+
+   new_user = UserDB(email=user_data.email, hashed_password=hash_pwd)
+
+   db.add(new_user)
+   db.commit()
+   db.refresh(new_user)
+   return new_user
