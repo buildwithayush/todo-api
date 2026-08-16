@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List,Optional
 
 from app.models.todo import TodoCreate,TodoResponse,UpdateTodo
-from app.models.user_pydantic import UserBase,UserCreate,UserResponse,Token
+from app.models.user_pydantic import UserCreate,UserResponse,Token
 from app.database import get_db
 from app.models.todo_db import TodoDB
 from app.models.user_db import UserDB
@@ -29,8 +29,10 @@ def get_todos(
    completed:Optional[bool] =Query(None, description='Filter by completed status'),
    skip:int =Query(0, ge=0 ,description='Number of records to skip '),
    limit:int = Query(10,ge=1,le=100 ,description='Number Of records to fetch'),
-   db:Session = Depends(get_db)):
-    query = db.query(TodoDB)
+   db:Session = Depends(get_db),
+   current_user:UserDB = Depends(get_current_user)
+   ):
+    query = db.query(TodoDB).filter(TodoDB.user_id == current_user.id)
     if completed is not None:
        query = query.filter(TodoDB.completed == completed)
 
@@ -40,11 +42,13 @@ def get_todos(
 
 # CREATE A NEW TODO
 @router.post('/' , response_model=TodoResponse , status_code=status.HTTP_201_CREATED)
-def create_todo(todo: TodoCreate, db: Session = Depends(get_db)):
+def create_todo(todo: TodoCreate, db: Session = Depends(get_db),current_user:UserDB = Depends(get_current_user)):
     db_todo = TodoDB(
         title=todo.title,
         description=todo.description,
         completed=todo.completed,
+        user_id = current_user.id
+        
     )
 
     db.add(db_todo)
@@ -53,8 +57,8 @@ def create_todo(todo: TodoCreate, db: Session = Depends(get_db)):
     return db_todo
 
 @router.get('/{todo_id}' ,response_model=TodoResponse)
-def get_todos_by_id(todo_id:int,db: Session = Depends(get_db)):
-     todo = db.query(TodoDB).filter(TodoDB.id == todo_id).first()
+def get_todos_by_id(todo_id:int,db: Session = Depends(get_db),current_user:UserDB = Depends(get_current_user)):
+     todo = db.query(TodoDB).filter(TodoDB.id == todo_id, TodoDB.user_id == current_user.id).first()
      if not todo:
        raise HTTPException(
     status_code=status.HTTP_404_NOT_FOUND,
@@ -65,8 +69,8 @@ def get_todos_by_id(todo_id:int,db: Session = Depends(get_db)):
 
 
 @router.put('/{todo_id}', response_model=TodoResponse)
-def update_todo(todo_id: int, todo_data: TodoCreate, db:Session = Depends(get_db)):
-    todo = db.query(TodoDB).filter(TodoDB.id== todo_id).first()
+def update_todo(todo_id: int, todo_data: TodoCreate, db:Session = Depends(get_db),current_user:UserDB = Depends(get_current_user)):
+    todo = db.query(TodoDB).filter(TodoDB.id== todo_id, TodoDB.user_id == current_user.id).first()
     if not todo:
      raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -83,8 +87,9 @@ def update_todo(todo_id: int, todo_data: TodoCreate, db:Session = Depends(get_db
     return todo
 
 @router.delete('/{todo_id}',status_code=status.HTTP_204_NO_CONTENT)
-def delete_todo(todo_id:int,db:Session = Depends(get_db)):
-   todo = db.query(TodoDB).filter(TodoDB.id == todo_id).first()
+def delete_todo(todo_id:int,db:Session = Depends(get_db),current_user:UserDB =Depends(get_current_user)):
+   todo = db.query(TodoDB).filter(TodoDB.id == todo_id , TodoDB.user_id == current_user.id).first()
+    
    if not todo:
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -95,8 +100,8 @@ def delete_todo(todo_id:int,db:Session = Depends(get_db)):
    db.commit()
 
 @router.patch('/{todo_id}' ,response_model=TodoResponse)
-def update_todo_partial(todo_id:int,todo_data:UpdateTodo,db:Session= Depends(get_db)):
-   todo = db.query(TodoDB).filter(TodoDB.id == todo_id).first()
+def update_todo_partial(todo_id:int,todo_data:UpdateTodo,db:Session= Depends(get_db), current_user:UserDB=Depends(get_current_user)):
+   todo = db.query(TodoDB).filter(TodoDB.id == todo_id,TodoDB.user_id == current_user.id).first()
    if not todo:
       raise HTTPException(
          status_code= status.HTTP_404_NOT_FOUND,
