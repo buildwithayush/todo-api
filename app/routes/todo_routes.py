@@ -7,6 +7,7 @@ from app.models.user_pydantic import UserBase,UserCreate,UserResponse,Token
 from app.database import get_db
 from app.models.todo_db import TodoDB
 from app.models.user_db import UserDB
+from app.api.deps import get_current_user
 
 
 
@@ -15,6 +16,11 @@ from app.core.security import hash_password,create_access_token,verify_password
 router = APIRouter(
     prefix="/todos",
     tags=["Todos"]
+)
+
+auth_router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
 )
 
 # GET ALL TODOS
@@ -104,7 +110,7 @@ def update_todo_partial(todo_id:int,todo_data:UpdateTodo,db:Session= Depends(get
    db.refresh(todo)  
    return todo
 
-@router.post('/signup',response_model=UserResponse ,status_code=status.HTTP_201_CREATED)
+@auth_router.post('/signup',response_model=UserResponse ,status_code=status.HTTP_201_CREATED)
 def user_signup(user_data:UserCreate,db:Session=Depends(get_db)):
    user = db.query(UserDB).filter(UserDB.email == user_data.email).first()
 
@@ -122,7 +128,7 @@ def user_signup(user_data:UserCreate,db:Session=Depends(get_db)):
    db.refresh(new_user)
    return new_user
 
-@router.post('/login',response_model=Token)
+@auth_router.post('/login',response_model=Token)
 def user_login(login_data:UserCreate,db:Session= Depends(get_db)):
    login_user = db.query(UserDB).filter(UserDB.email == login_data.email).first()
 
@@ -133,4 +139,8 @@ def user_login(login_data:UserCreate,db:Session= Depends(get_db)):
       )
    access_token = create_access_token(data={"sub": str(login_user.id)})
    return {"access_token": access_token, "token_type": "bearer"}
-  
+
+@auth_router.get("/me", response_model=UserResponse)
+def get_my_profile(current_user: UserDB = Depends(get_current_user)):
+    
+    return current_user  
