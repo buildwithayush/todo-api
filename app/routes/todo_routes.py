@@ -3,12 +3,14 @@ from sqlalchemy.orm import Session
 from typing import List,Optional
 
 from app.models.todo import TodoCreate,TodoResponse,UpdateTodo
-from app.models.user_pydantic import UserBase,UserCreate,UserResponse
+from app.models.user_pydantic import UserBase,UserCreate,UserResponse,Token
 from app.database import get_db
 from app.models.todo_db import TodoDB
 from app.models.user_db import UserDB
 
-from app.core.security import hash_password
+
+
+from app.core.security import hash_password,create_access_token,verify_password
 
 router = APIRouter(
     prefix="/todos",
@@ -119,3 +121,16 @@ def user_signup(user_data:UserCreate,db:Session=Depends(get_db)):
    db.commit()
    db.refresh(new_user)
    return new_user
+
+@router.post('/login',response_model=Token)
+def user_login(login_data:UserCreate,db:Session= Depends(get_db)):
+   login_user = db.query(UserDB).filter(UserDB.email == login_data.email).first()
+
+   if not login_user or not verify_password(plain_password=login_data.password , hashed_password=login_user.hashed_password):
+      raise HTTPException(
+         status_code=status.HTTP_401_UNAUTHORIZED,
+         detail='Invalid Credentials'
+      )
+   access_token = create_access_token(data={"sub": str(login_user.id)})
+   return {"access_token": access_token, "token_type": "bearer"}
+  
