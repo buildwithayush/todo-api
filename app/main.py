@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.database import engine,Base
 from app.routes.todo_routes import router as todo_router
-
+from app.routes.todo_routes import auth_router as todo_auth_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -11,6 +11,7 @@ app = FastAPI(
 )
 
 app.include_router(todo_router, prefix='/api/v1')
+app.include_router(todo_auth_router ,prefix="/api/v1")
 
 @app.get('/')
 def root():
