@@ -31,4 +31,17 @@ def test_login_wrong_password(client):
     response = client.post('/api/v1/auth/login',json=payload)
     assert response.status_code == 401
     assert response.json()['detail'] == 'Invalid Credentials'
-        
+
+def test_login_sucess(client):
+    payload = {
+           "email": "tester@example.com",
+           "password": "strongpassword123"
+       }  
+    response = client.post('api/v1/auth/login' , json =payload)
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert 'access_token' in data
+    assert data['token_type'] == 'bearer'  
