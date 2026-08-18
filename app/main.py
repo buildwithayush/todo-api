@@ -4,7 +4,6 @@ from app.routes.todo_routes import router as todo_router
 from app.routes.todo_routes import auth_router as todo_auth_router
 from fastapi.middleware.cors import CORSMiddleware
 
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title='Todo APi',
