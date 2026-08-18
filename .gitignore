@@ -57,8 +57,9 @@ dist/
 
 # =========================
 # SQLite Database
-# (Uncomment if you don't want
-# to commit local DB files)
+# Ignore local DB files so they are not tracked in git
 # =========================
-# *.db
-# *.sqlite3
+*.db
+*.sqlite3
+todo.db
+*todo.db
