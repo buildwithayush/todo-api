@@ -122,7 +122,7 @@ def user_signup(user_data:UserCreate,db:Session=Depends(get_db)):
    if user:
       raise HTTPException(
          status_code=status.HTTP_400_BAD_REQUEST,
-         detail=' Email Already Registered'
+         detail='Email Already Registered'
       )
    hash_pwd = hash_password(user_data.password)
 
