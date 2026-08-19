@@ -9,12 +9,11 @@ from app.main import app
 from app.database import Base, get_db
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from app.core.config import settings
 
-SQL_ALCHEMY_DATABASE_URL = 'sqlite:///./test_temp.db'
 
 engine = create_engine(
-  SQL_ALCHEMY_DATABASE_URL,
-  connect_args={'check_same_thread':False}
+  settings.TEST_DATABASE_URL,
 )
 
 TestingSessionLocal = sessionmaker(autocommit= False,autoflush=False,bind=engine)
