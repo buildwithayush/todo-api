@@ -9,7 +9,6 @@ class TodoDB(Base):
     title : Mapped[str] = mapped_column(String, nullable=False)             
     description: Mapped[str | None] = mapped_column(String, nullable=True)        
     completed : Mapped[bool] = mapped_column(Boolean, default=False)
-    priority:Mapped[str] = mapped_column(String ,default='medium',nullable=False)
 
     user_id: Mapped[int] = mapped_column(Integer,ForeignKey("users.id"),nullable=False)
 
