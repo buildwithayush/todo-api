@@ -8,6 +8,7 @@ from alembic import context
 from app.database import Base
 from app.models.user_db import UserDB
 from app.models.todo_db import TodoDB
+from app.core.config import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -42,7 +43,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = config.get_main_option("sqlalchemy.url",settings.DATABASE_URL)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -55,6 +56,8 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    configuration = config.get_section(config.config_ini_section) or {}
+    configuration["sqlalchemy.url"] = settings.DATABASE_URL
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
@@ -62,7 +65,7 @@ def run_migrations_online() -> None:
 
     """
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -80,3 +83,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+ 
